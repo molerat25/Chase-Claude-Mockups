@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chase App Prototype</title>
+<style>
+  :root {
+    --page-bg: #383838;
+    --chase-blue: #4a78b8;
+    --chase-btn: #5b8fe6;
+    --link: #1e5bb8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--page-bg);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh; overflow: hidden;
+  }
+
+  /* ---------- Prototype chrome (outside the phone) ---------- */
+  .proto-bar { position: fixed; top: 12px; left: 12px; display: flex; gap: 8px; align-items: center; font-size: 11px; color: #a9a9a9; z-index: 100; }
+  .proto-badge { border: 1px solid #555; border-radius: 999px; padding: 3px 9px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; }
+  .proto-bar button { font: inherit; border: 1px solid #555; background: transparent; border-radius: 999px; padding: 3px 10px; cursor: pointer; color: #cfcfcf; }
+  .proto-bar button:hover { background: #444; }
+
+  /* ---------- iPhone frame (lavender titanium) ---------- */
+  .stage { position: fixed; inset: 0; }
+  .phone {
+    position: absolute; left: 50%; top: 50%; width: 418.8px; height: 877.3px; flex: none;
+    border-radius: 74.5px; padding: 13.9px 14.4px; background: #333;
+    box-shadow:
+      inset 0 0 0 .7px #675d72, inset 0 0 0 1.4px #7c708a, inset 0 0 0 2.0px #8c7f9d,
+      inset 0 0 0 2.6px #9a8bab, inset 0 0 0 3.3px #a99cba, inset 0 0 0 3.9px #bfb4cb,
+      inset 0 0 0 4.5px #d4cdde, inset 0 0 0 5.1px #c0bcc5, inset 0 0 0 5.6px #333235;
+    transform-origin: center center;
+  }
+  .btn { position: absolute; width: 4.4px; border-radius: 1.6px 0 0 1.6px; background: linear-gradient(90deg,#4f4b55,#5c5761 15%,#99959e 45%,#a29da6 75%,#8c8496); }
+  .btn.l { left: -3.4px; } .btn.r { right: -3.4px; transform: scaleX(-1); }
+  .screen {
+    position: relative; width: 390px; height: 849.5px; border-radius: 58px; overflow: hidden; background: #fff;
+    box-shadow: 0 0 0 4.6px #000, 0 0 0 5.3px #030303, 0 0 0 5.9px #090909, 0 0 0 6.5px #111, 0 0 0 7.2px #1a1a1a, 0 0 0 7.8px #242424, 0 0 0 8.4px #2c2c2c, inset 0 0 0 .6px #d9dbde;
+  }
+  .island { position: absolute; top: 14.2px; left: 134.5px; width: 121px; height: 34.1px; background: #000; border-radius: 17px; z-index: 50; }
+  .island::after { content: ""; position: absolute; right: 23px; top: 10.5px; width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #1b2a55 0 2px, #0d1122 3px, #070709 6.5px); }
+
+  /* ---------- Status bar ---------- */
+  .status { position: absolute; top: 0; left: 0; right: 0; height: 54px; z-index: 40; pointer-events: none; color: #000; }
+  .status .time { position: absolute; left: 45.4px; top: 20.9px; font: 600 16.2px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; letter-spacing: -1.35px; }
+  .status .rec { position: absolute; left: 83.4px; top: 25.3px; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .status svg { position: absolute; }
+  .status.light { color: #fff; }
+
+  /* ---------- Views ---------- */
+  .view { position: absolute; inset: 0; display: none; }
+  .view.active { display: block; }
+
+  /* ---------- Login ---------- */
+  #login { background: #fff; }
+  .login-hero { position: absolute; top: 0; left: 0; right: 0; height: 70%; background: var(--chase-blue); overflow: hidden; }
+  .login-hero svg.waves { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .brand { position: absolute; top: 64px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 8px; color: #fff; }
+  .brand .word { font-size: 30px; font-weight: 600; letter-spacing: .08em; }
+  .login-card {
+    position: absolute; left: 22px; right: 22px; top: 41%;
+    background: #fff; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.18); padding: 4px 12px 12px;
+  }
+  .field { display: flex; align-items: center; border-bottom: 1px solid #b9c0cc; height: 54px; margin: 0 8px; }
+  .field input { border: 0; outline: 0; flex: 1; font-size: 15px; color: #333; background: transparent; }
+  .field input::placeholder { color: #6b7280; }
+  .checks { display: flex; justify-content: space-between; margin: 18px 4px 16px; font-size: 13px; color: #444; }
+  .checks label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .checks input { width: 16px; height: 16px; accent-color: var(--chase-btn); }
+  .logon {
+    width: 100%; height: 40px; border: 0; border-radius: 3px; background: var(--chase-btn); color: #fff;
+    font-size: 17px; cursor: pointer;
+  }
+  .logon:hover { filter: brightness(1.05); }
+  .forgot { text-align: center; margin-top: 12px; color: var(--link); font-weight: 600; font-size: 14px; }
+  .login-links { position: absolute; top: calc(41% + 270px); left: 0; right: 0; text-align: center; }
+  .login-links .row1 { color: var(--link); font-size: 15px; display: flex; justify-content: center; gap: 0; }
+  .login-links .row1 span { padding: 0 12px; } .login-links .row1 span + span { border-left: 1.5px solid #9aa4b4; }
+  .login-links .row2 { color: var(--link); font-size: 12px; margin-top: 20px; display: flex; justify-content: center; }
+  .login-links .row2 span { padding: 0 10px; } .login-links .row2 span + span { border-left: 1px solid #9aa4b4; }
+  .legal { font-size: 9px; color: #6b7280; margin-top: 12px; line-height: 1.5; }
+
+
+  /* ---------- Home (light theme) ---------- */
+  #home { background: #fff; font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; }
+  .home-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  .home-scroll::-webkit-scrollbar { display: none; }
+  .page { position: relative; height: 3341px; }
+  .page .t { position: absolute; line-height: 1; white-space: nowrap; }
+  .page .b, .home-fixed .b { position: absolute; }
+  .dots { position: absolute; left: 50%; top: 50%; width: 4.6px; height: 4.6px; margin: -2.3px 0 0 -2.3px; border-radius: 50%; background: #fff; box-shadow: -7.6px 0 0 #fff, 7.6px 0 0 #fff; }
+  .home-head { position: absolute; left: 0; right: 0; top: 0; height: 108px; background: rgba(255,255,255,.96); z-index: 5; }
+  .search { position: absolute; left: 60.2px; top: 66.3px; width: 233.6px; height: 31.5px; border: 1px solid #6b7a8b; border-radius: 16px; font: 14.6px/29.5px Helvetica, Arial, sans-serif; color: #46515e; text-align: center; padding-left: 1px; }
+  .bottom-fade { position: absolute; left: 0; right: 0; top: 752px; height: 16px; background: linear-gradient(rgba(255,255,255,0), rgba(255,255,255,.35)); z-index: 4; pointer-events: none; }
+  .tabbar { position: absolute; left: 0; right: 0; top: 767.8px; bottom: 0; background: #fff; border-radius: 34px 34px 0 0; z-index: 5;
+            box-shadow: 0 -.5px 0 rgba(30,40,60,.05), 0 -3px 14px rgba(30,40,60,.07); }
+  .tabbar .lab { position: absolute; font: 9.8px/1 Helvetica, Arial, sans-serif; color: #4e5b6c; white-space: nowrap; text-align: center; width: 90px; margin-left: -45px; }
+  .tabbar .lab.on { color: #285da3; font-weight: 700; }
+  .tabbar svg { position: absolute; }
+
+  /* ---------- Card detail (Freedom Unlimited) ---------- */
+  .card-hit { border: 0; background: transparent; border-radius: 10.5px; cursor: pointer; padding: 0; }
+  .card-hit:hover { background: rgba(255,255,255,.05); }
+  .card-hit:active { background: rgba(0,0,0,.06); }
+  .detail { position: absolute; inset: 0; z-index: 8; background: #fff; font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; color: #131f3b;
+            transform: translateX(100%); transition: transform .38s cubic-bezier(.2,.8,.2,1); visibility: hidden; }
+  .detail.open { transform: translateX(0); visibility: visible; }
+  .detail.closing { visibility: visible; }
+  #home .home-scroll { transition: transform .38s cubic-bezier(.2,.8,.2,1); }
+  #home.pushed .home-scroll, #home.pushed .home-head { transform: translateX(-28%); }
+  #home .home-head { transition: transform .38s cubic-bezier(.2,.8,.2,1); }
+  .d-head { position: absolute; left: 0; right: 0; top: 0; height: 94px; background: rgba(255,255,255,.96); z-index: 2; }
+  .d-back { position: absolute; left: 22px; top: 50px; width: 40px; height: 40px; border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; border-radius: 50%; }
+  .d-back:hover { background: #f1f5fa; }
+  .d-title { position: absolute; left: 60px; right: 60px; top: 60px; text-align: center; font-size: 17px; line-height: 20px; color: #131f3b; white-space: nowrap; }
+  .d-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  .d-scroll::-webkit-scrollbar { display: none; }
+  .d-page { position: relative; padding: 109px 0 48px; }
+  .fu-card { display: block; margin: 0 auto; border-radius: 10px; box-shadow: 0 8px 20px rgba(12,40,90,.18), 0 1px 3px rgba(12,40,90,.12); }
+  .d-chips { display: flex; gap: 8.5px; padding: 0 16px; margin-top: 17px; overflow-x: auto; scrollbar-width: none; }
+  .d-chips::-webkit-scrollbar { display: none; }
+  .d-chip { flex: none; height: 35.5px; padding: 0 16px; border-radius: 18px; background: #f3f6fa; color: #285da3; font-size: 15.5px; font-weight: 400; display: flex; align-items: center; white-space: nowrap; }
+  .d-box { position: relative; margin: 17px 16px 0; height: 365px; border: 1px solid #d5d9dd; border-radius: 10.5px; background: #fff; }
+  .d-box .a { position: absolute; white-space: nowrap; line-height: 1; }
+  .d-lbl { font-size: 15.5px; color: #55606d; }
+  .d-val { font-size: 15.5px; color: #131f3b; font-weight: 400; right: 16px; }
+  .d-btn { position: absolute; top: 290.8px; height: 35px; width: 154px; border-radius: 18px; border: 0; font: 400 16px/35px Helvetica, Arial, sans-serif; text-align: center; cursor: default; }
+  .d-more { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); height: 35.5px; padding: 0 20px; border-radius: 18px; background: #eaf1fb; color: #285da3; font-size: 16px; font-weight: 400; display: flex; align-items: center; gap: 10px; white-space: nowrap; box-shadow: 0 0 0 4px #fff; }
+  .d-row-box { margin: 35px 16px 0; height: 60px; border: 1px solid #d5d9dd; border-radius: 10.5px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px 0 16px; font-size: 18px; color: #131f3b; }
+  .d-h2 { margin: 32px 16px 12px; display: flex; justify-content: space-between; align-items: baseline; }
+  .d-h2 h2 { font-size: 20.9px; font-weight: 400; color: #131f3b; }
+  .d-h2 span { font-size: 13.6px; font-weight: 700; color: #2b62b2; }
+  .d-tx { margin: 0 16px; border: 1px solid #d5d9dd; border-radius: 10.5px; }
+  .d-tx-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; }
+  .d-tx-row + .d-tx-row { border-top: 1px solid #e6e9ee; }
+  .d-tx-row .m { font-size: 15.5px; color: #131f3b; }
+  .d-tx-row .d { font-size: 12px; color: #55606d; margin-top: 4px; }
+  .d-tx-row .v { font-size: 15.5px; color: #131f3b; }
+  .d-tx-row .v.cr { color: #1e7b5b; }
+
+  /* ---------- Card carousel + locked upgrade ---------- */
+  .d-carousel { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-padding: 0 25px;
+                padding: 4px 25px 22px; margin: -4px 0 -22px; scrollbar-width: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .d-carousel::-webkit-scrollbar { display: none; }
+  .d-carousel.dragging { cursor: grabbing; scroll-snap-type: none; }
+  .d-slide { flex: none; width: 340px; height: 214px; scroll-snap-align: start; position: relative; border-radius: 10px;
+             box-shadow: 0 8px 20px rgba(12,40,90,.18), 0 1px 3px rgba(12,40,90,.12); }
+  .d-slide svg.fu-card, .d-slide svg.sv-card { display: block; margin: 0; box-shadow: none; border-radius: 10px; pointer-events: none; }
+  .d-lock { position: absolute; inset: 0; border-radius: 10px; display: grid; place-items: center; align-content: center; gap: 10px;
+            background: linear-gradient(180deg, rgba(19,31,59,.10), rgba(19,31,59,.42)); pointer-events: none; }
+  .d-lock-badge { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.94); display: grid; place-items: center;
+                  box-shadow: 0 6px 18px rgba(10,25,60,.30), 0 0 0 6px rgba(255,255,255,.28); }
+  .d-lock-tag { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff;
+                background: rgba(19,31,59,.62); padding: 5px 11px; border-radius: 999px; }
+  .d-dots { display: flex; justify-content: center; gap: 7px; margin-top: 12px; }
+  .d-dots button { width: 7px; height: 7px; border-radius: 4px; border: 0; padding: 0; background: #c9d1dc; cursor: pointer; transition: width .25s ease, background .25s ease; }
+  .d-dots button.on { width: 20px; background: #285da3; }
+  .d-dots button[data-i="1"] { position: relative; }
+  .d-title span { position: absolute; left: 0; right: 0; transition: opacity .2s ease; }
+  .d-title span + span { opacity: 0; }
+  .detail.p1 .d-title span:first-child { opacity: 0; } .detail.p1 .d-title span + span { opacity: 1; }
+  .d-pane { display: none; }
+  .d-pane.on { display: block; animation: paneIn .28s ease; }
+  @keyframes paneIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .d-pane .d-chips { margin-top: 13px; }
+  .d-unlock { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 16px 0; height: 50px; border-radius: 25px; border: 0; width: calc(100% - 32px);
+              background: linear-gradient(90deg, #1a6fdb, #0e4fb4); color: #fff; font: 700 17px/1 Helvetica, Arial, sans-serif; cursor: pointer;
+              box-shadow: 0 8px 18px rgba(26,111,219,.34), inset 0 1px 0 rgba(255,255,255,.25); transition: transform .12s ease, box-shadow .12s ease; }
+  .d-unlock:hover { box-shadow: 0 10px 22px rgba(26,111,219,.42), inset 0 1px 0 rgba(255,255,255,.25); }
+  .d-unlock:active { transform: scale(.98); }
+  .d-unlock::after { content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -80px; transform: skewX(-20deg);
+                     background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.35), rgba(255,255,255,0)); animation: shine 3.2s ease-in-out infinite; }
+  @keyframes shine { 0%, 55% { left: -80px; } 85%, 100% { left: 110%; } }
+  .d-info { margin: 17px 16px 0; border: 1px solid #d5d9dd; border-radius: 10.5px; padding: 20px 16px 18px; }
+  .d-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: #285da3; }
+  .d-info h3 { font-size: 23px; font-weight: 700; color: #131f3b; margin: 8px 0 9px; }
+  .d-info p { font-size: 15px; line-height: 1.45; color: #55606d; }
+  .d-perks { list-style: none; margin: 16px 0 4px; display: grid; gap: 11px; }
+  .d-perks li { display: flex; align-items: center; gap: 11px; font-size: 15.5px; color: #131f3b; }
+  .d-perks li::before { content: "✓"; flex: none; width: 22px; height: 22px; border-radius: 50%; background: #eaf1fb; color: #285da3; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+  .d-kv { display: flex; justify-content: space-between; padding: 13px 0; border-top: 1px solid #e6e9ee; font-size: 15.5px; }
+  .d-kv:first-of-type { margin-top: 14px; }
+  .d-kv span:first-child { color: #55606d; } .d-kv span:last-child { color: #131f3b; }
+  .d-fine { margin: 14px 18px 0; font-size: 11.5px; line-height: 1.45; color: #6b7480; text-align: center; }
+
+  .home-indicator { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); width: 134px; height: 5px; border-radius: 3px; background: #fff; opacity: .9; z-index: 60; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <span class="proto-badge">Design prototype · non-functional</span>
+  <button id="restart" type="button">↺ Restart flow</button>
+</div>
+
+<div class="stage">
+<div class="phone">
+  <span class="btn l" style="top:179.9px;height:39.3px"></span>
+  <span class="btn l" style="top:250.1px;height:65.6px"></span>
+  <span class="btn l" style="top:333.09999999999997px;height:65px"></span>
+  <span class="btn r" style="top:272.59999999999997px;height:103.6px"></span>
+  <div class="screen" id="screen">
+    <div class="island"></div>
+    <div class="status light" id="status">
+      <span class="time">4:38</span><span class="rec"></span>
+      <svg style="left:288.4px;top:25.8px" width="12.6" height="5.8" viewBox="0 0 12.6 5.8"><rect x="0" y="0" width="2.9" height="5.8" rx=".4" fill="currentColor"/><rect x="4.85" y="0" width="2.9" height="5.8" rx=".4" fill="currentColor"/><rect x="9.7" y="0" width="2.9" height="5.8" rx=".4" fill="currentColor"/></svg>
+      <svg style="left:312px;top:25.2px" width="12.4" height="7.4" viewBox="0 0 12.4 7.4"><path d="M.3 2.1 2.6.5l2.6 2.7 1.9-1.3 5 4.1-1.9 1.1-3.3-2.6-1.9 1.3z" fill="currentColor"/></svg>
+      <svg style="left:332.2px;top:23.1px" width="24.2" height="11.8" viewBox="0 0 24.2 11.8"><rect x="0" y="0" width="24.2" height="11.8" rx="3.6" fill="#d9d9d9"/><path d="M3.6 0h10.5v11.8H3.6A3.6 3.6 0 0 1 0 8.2V3.6A3.6 3.6 0 0 1 3.6 0z" fill="#e8c547"/><text x="12.1" y="9.3" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Helvetica,sans-serif" font-size="9.6" font-weight="700" fill="#000">47</text></svg>
+    </div>
+
+    <!-- ===== 1. LOGIN (decorative inputs; no form, nothing submitted) ===== -->
+    <section class="view active" id="login">
+      <div class="login-hero">
+        <svg class="waves" id="waves" preserveAspectRatio="none" viewBox="0 0 390 600"></svg>
+        <div class="brand">
+          <span class="word">CHASE</span>
+          <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true">
+            <g fill="#fff" stroke="var(--chase-blue)" stroke-width="4">
+              <polygon id="pc" points="35,4 67,4 96,33 64,33 64,36 35,36"/>
+              <use href="#pc" transform="rotate(90 50 50)"/>
+              <use href="#pc" transform="rotate(180 50 50)"/>
+              <use href="#pc" transform="rotate(270 50 50)"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="login-card">
+        <div class="field"><input type="text" placeholder="Enter your User ID" autocomplete="off" spellcheck="false"></div>
+        <div class="field">
+          <input type="password" placeholder="Enter your Password" autocomplete="off">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#4a78d6" stroke-width="1.8" stroke-linecap="round">
+            <path d="M2 8V5a3 3 0 0 1 3-3h3M20 2h3a3 3 0 0 1 3 3v3M26 20v3a3 3 0 0 1-3 3h-3M8 26H5a3 3 0 0 1-3-3v-3"/>
+            <path d="M9.5 10v2M18.5 10v2M14 10v6h-1.5M10 19.5c2.4 2 5.6 2 8 0"/>
+          </svg>
+        </div>
+        <div class="checks">
+          <label>Remember me <input type="checkbox"></label>
+          <label>Use token <input type="checkbox"></label>
+        </div>
+        <button class="logon" id="logon" type="button">Log On</button>
+        <div class="forgot">Forgot User ID or Password?</div>
+      </div>
+
+      <div class="login-links">
+        <div class="row1"><span>Enroll</span><span>ATM &amp; Branch</span><span>Contact</span></div>
+        <div class="row2"><span>FAQs</span><span>Privacy</span><span>Info</span></div>
+        <div class="legal">
+          ⌂ Equal Housing Lender<br>
+          Deposit products provided by JPMorgan Chase Bank, N.A. Member FDIC<br>
+          Credit cards are issued by Chase Bank USA, N.A.<br>
+          © 2026 JPMorgan Chase &amp; Co.
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 2. HOME (placeholder data only) ===== -->
+    <section class="view" id="home">
+      <div class="home-scroll" id="homeScroll"><div class="page">
+<div class="t" style="top:150.33px;font-size:23.6px;color:#131f3b;left:15.00px;letter-spacing:-.1px;">Accounts</div>
+<div class="b" style="left:16.1px;top:190.5px;width:359.10px;height:146.70px;border-radius:10.5px;background:linear-gradient(115deg,#3b5d8c 0%,#436594 45%,#4b6d9a 100%);"></div>
+<div class="t" style="top:220.61px;font-size:17.72px;color:#fff;left:31.60px;">CHASE COLLEGE</div>
+<div class="t" style="top:265.46px;font-size:28.88px;color:#fff;left:31.00px;">$2,450</div>
+<div class="t" style="top:303.75px;font-size:13.76px;color:rgba(255,255,255,.86);left:31.00px;">Available balance</div>
+<div class="t" style="top:303.65px;font-size:13.9px;color:#fff;right:31.10px;text-align:right;">0000</div>
+<div class="b" style="left:313.4px;top:205.9px;width:46.30px;height:46.30px;border-radius:50%;background:rgba(255,255,255,.2);"><i class="dots"></i></div>
+<div class="b" style="left:16.1px;top:345.0px;width:359.10px;height:209.80px;border-radius:10.5px;background:radial-gradient(60% 55% at 52% 48%,rgba(45,90,150,.55),rgba(45,90,150,0) 70%),linear-gradient(160deg,#1e477d 0%,#1b3a6c 40%,#18305d 70%,#172a52 100%);"></div>
+<svg class="b" style="left:24.5px;top:362.5px;" width="42" height="42" viewBox="0 0 42 42" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-4.6" y="-4.6" width="9.2" height="9.2" rx=".8" fill="#e4e8ef" transform="translate(20.1 7.899999999999977) rotate(30) skewX(-8)"/><rect x="-4.6" y="-4.6" width="9.2" height="9.2" rx=".8" fill="#e4e8ef" transform="translate(7.700000000000003 20.899999999999977) rotate(30) skewX(-8)"/><rect x="-4.6" y="-4.6" width="9.2" height="9.2" rx=".8" fill="#e4e8ef" transform="translate(33.1 20.899999999999977) rotate(30) skewX(-8)"/><rect x="-4.6" y="-4.6" width="9.2" height="9.2" rx=".8" fill="#e4e8ef" transform="translate(20.799999999999997 33.89999999999998) rotate(30) skewX(-8)"/></svg>
+<div class="t" style="top:365.24px;font-size:17.8px;color:#fff;font-weight:700;font-style:italic;left:68.00px;">Freedom</div>
+<div class="t" style="top:384.64px;font-size:17.8px;color:#fff;font-weight:700;font-style:italic;left:68.40px;">Unlimited</div>
+<div class="b" style="left:313.4px;top:360.9px;width:46.30px;height:46.30px;border-radius:50%;background:rgba(255,255,255,.2);"><i class="dots"></i></div>
+<div class="t" style="top:441.27px;font-size:29.0px;color:#fff;left:31.00px;">$420</div>
+<div class="t" style="top:479.35px;font-size:13.76px;color:rgba(255,255,255,.86);left:31.00px;">Current balance</div>
+<div class="t" style="top:478.85px;font-size:13.9px;color:#fff;right:31.10px;text-align:right;">0000</div>
+<div class="b" style="left:31.5px;top:502.6px;width:301.90px;height:36.70px;border-radius:3px;background:#eff9f7;"></div>
+<svg class="b" style="left:39.6px;top:507.2px;" width="11" height="12" viewBox="0 0 11 12" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1.2 6.4 4.3 10.6 9.8 1.2" stroke="#386357" stroke-width="1.7"/></svg>
+<div class="t" style="top:507.13px;font-size:10.74px;color:#2f5a4f;left:58.60px;">Your automatic payment is scheduled for Nov 18.</div>
+<div class="b" style="left:16.1px;top:572.1px;width:359.10px;height:41.20px;border-radius:21px;border:1px solid #2e67b3;"></div>
+<div class="t" style="top:587.70px;font-size:13.63px;color:#285da3;font-weight:700;left:39.20px;">Link external accounts</div>
+<svg class="b" style="left:336.9px;top:583.9px;" width="15.5" height="15.5" viewBox="0 0 15.5 15.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M7.75 1v13.5M1 7.75h13.5" stroke="#285da3" stroke-width="2"/></svg>
+<div class="t" style="top:657.94px;font-size:19.3px;color:#131f3b;left:15.90px;">Send &amp; receive money with <b style="color:#6a1db6;font-weight:700">Zelle</b><span style="color:#6a1db6;font-size:9px;font-weight:700;position:relative;top:-4.6px;margin-left:.6px">®</span></div>
+<div class="b" style="left:16.1px;top:697.0px;width:114.50px;height:90.80px;border-radius:10.5px;border:1px solid #d4d8de;"></div>
+<svg class="b" style="left:61.349999999999994px;top:715.3px;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke="#2d64b6" stroke-width="1.8"/><path d="M6.8 12h10M12.6 7.6 17 12l-4.4 4.4" stroke="#2d64b6" stroke-width="1.8"/></svg>
+<div class="t" style="top:752.81px;font-size:15.7px;color:#172a4d;left:18.35px;width:110px;text-align:center;">Send</div>
+<div class="b" style="left:138.4px;top:697.0px;width:114.50px;height:90.80px;border-radius:10.5px;border:1px solid #d4d8de;"></div>
+<svg class="b" style="left:183.65px;top:715.3px;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke="#2d64b6" stroke-width="1.8"/><path d="M17.2 12h-10M11.4 7.6 7 12l4.4 4.4" stroke="#2d64b6" stroke-width="1.8"/></svg>
+<div class="t" style="top:752.81px;font-size:15.7px;color:#172a4d;left:140.65px;width:110px;text-align:center;">Request</div>
+<div class="b" style="left:260.6px;top:697.0px;width:114.50px;height:90.80px;border-radius:10.5px;border:1px solid #d4d8de;"></div>
+<svg class="b" style="left:305.85px;top:715.3px;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#2d64b6" stroke-width="1.8"><rect x="2" y="2" width="7.6" height="7.6" rx="1"/><rect x="14.4" y="2" width="7.6" height="7.6" rx="1"/><rect x="2" y="14.4" width="7.6" height="7.6" rx="1"/><path d="M14.4 14.4h3.2v3.2M22 14.4v1.6M14.4 22h3.2M20.4 18.8V22H22"/></g></svg>
+<div class="t" style="top:752.81px;font-size:15.7px;color:#172a4d;left:262.85px;width:110px;text-align:center;">QR Code</div>
+<div class="b" style="left:16.1px;top:828.9px;width:359.10px;height:122.30px;border-radius:10.5px;background:#f6eafa;"></div>
+<div class="t" style="top:853.83px;font-size:19.57px;color:#694378;left:31.60px;">Monthly spending</div>
+<div class="t" style="top:885.54px;font-size:29.3px;color:#311441;left:31.20px;">$620</div>
+<div class="t" style="top:925.34px;font-size:12.87px;color:#1a1c22;left:30.70px;">As of 10/09</div>
+<div class="b" style="left:265.1px;top:845.7px;width:94.60px;height:44.40px;border-radius:22.2px;background:#fff;"></div>
+<div class="t" style="top:860.33px;font-size:15.87px;color:#683977;font-weight:700;left:265.40px;width:94px;text-align:center;">October</div>
+<div class="b" style="left:0px;top:966.7px;width:390.00px;height:438.30px;background:#f1f5fa;"></div>
+<div class="t" style="top:989.66px;font-size:21.16px;color:#131f3b;left:15.30px;">Tools</div>
+<div class="b" style="left:16.1px;top:1031.7px;width:359.10px;height:128.70px;border-radius:10.5px;background:#fff;border:1px solid #d5d9dd;"></div>
+<div class="t" style="top:1052.89px;font-size:13.71px;color:#55606d;left:31.60px;">Credit score</div>
+<div class="t" style="top:1075.50px;font-size:29.55px;color:#0d121a;left:31.40px;">742</div>
+<div class="t" style="top:1113.59px;font-size:11.77px;color:#55606d;left:31.00px;">As of 10/03/26</div>
+<div class="t" style="top:1128.09px;font-size:11.76px;color:#55606d;left:31.60px;">by VantageScore® 3.0</div>
+<div class="b" style="left:312.8px;top:1048.4px;width:46.30px;height:46.30px;border-radius:50%;background:#eaf5fb;"></div>
+<svg class="b" style="left:326px;top:1062px;" width="20" height="13" viewBox="0 0 20 13" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11.5a8 8 0 0 1 16 0" stroke="#2a5e99" stroke-width="1.8"/><path d="M10 11.5 13.6 5.8" stroke="#2a5e99" stroke-width="1.8"/><path d="M1.4 11.6h17.2" stroke="#2a5e99" stroke-width="1.8"/></svg>
+<div class="b" style="left:16.1px;top:1190.6px;width:171.80px;height:184.10px;border-radius:10.5px;background:#fff;border:1px solid #d5d9dd;"></div>
+<div class="t" style="top:1211.17px;font-size:13.74px;color:#55606d;left:32.00px;">Savings</div>
+<div class="t" style="top:1234.74px;font-size:20.6px;color:#0d121a;left:31.70px;">Set money</div>
+<div class="t" style="top:1261.04px;font-size:20.6px;color:#0d121a;left:31.70px;">aside</div>
+<div class="b" style="left:126.0px;top:1312.3px;width:46.30px;height:46.30px;border-radius:50%;background:#eaf5fb;"></div>
+<svg class="b" style="left:136.65px;top:1322.9px;" width="25" height="25" viewBox="0 0 22 22" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h8.5a4.5 4.5 0 0 1 4.5 4.5v1.5h1.2M5.5 20V9.2a2.7 2.7 0 0 1 1-2.1M16.4 20H8.2a2.7 2.7 0 0 1-2.7-2.7M16.4 20a3.1 3.1 0 0 0 3.1-3.1v-4.4M8.4 4.5h5.4M11.1 4.5v2" stroke="#2a5e99" stroke-width="1.7"/><circle cx="15.4" cy="10.6" r=".9" fill="#2a5e99"/></svg>
+<div class="b" style="left:202.7px;top:1190.6px;width:172.50px;height:184.10px;border-radius:10.5px;background:#fff;border:1px solid #d5d9dd;"></div>
+<div class="t" style="top:1211.17px;font-size:13.74px;color:#55606d;left:218.60px;">Budgets</div>
+<div class="t" style="top:1234.74px;font-size:20.6px;color:#0d121a;left:218.30px;">Manage your</div>
+<div class="t" style="top:1261.04px;font-size:20.6px;color:#0d121a;left:218.30px;">spending</div>
+<div class="b" style="left:313.3px;top:1312.3px;width:46.30px;height:46.30px;border-radius:50%;background:#eaf5fb;"></div>
+<svg class="b" style="left:323.95px;top:1322.9px;" width="25" height="25" viewBox="0 0 22 22" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20.5h18M4.6 20V14M8.6 20V9.5M12.6 20v-5.2M16.6 20V5" stroke="#2a5e99" stroke-width="1.7"/></svg>
+<div class="b" style="left:16.1px;top:1435.2px;width:359.10px;height:208.50px;border-radius:10.5px;background:#fff;border:1px solid #dfe3e8;"></div>
+<div class="t" style="top:1456.90px;font-size:15.58px;color:#131f3b;left:31.60px;">Split transactions into 4 payments</div>
+<svg class="b" style="left:184.4px;top:1508.4px;" width="23" height="20.5" viewBox="0 0 23 20.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="21" height="18.5" rx="2.6" stroke="#2a5e99" stroke-width="1.7"/><path d="M1 6.8h21M6.4 12.8h3.6M13 12.8h3.6" stroke="#2a5e99" stroke-width="1.7"/></svg>
+<div class="t" style="top:1542.50px;font-size:13.76px;color:#131f3b;left:45.90px;width:300px;text-align:center;">Set up a Chase Pay in 4<sup style="font-size:7.6px;vertical-align:6.5px;margin-left:.6px">SM</sup></div>
+<div class="t" style="top:1568.00px;font-size:13.76px;color:#131f3b;right:170.40px;text-align:right;">$400</div>
+<div class="t" style="top:1587.26px;font-size:11.8px;color:#626d7b;left:135.00px;width:120px;text-align:center;">Available</div>
+<svg class="b" style="left:191.4px;top:1609.6px;" width="9" height="14" viewBox="0 0 9 14" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.4 7 7 2 12.6" stroke="#131f3b" stroke-width="1.6"/></svg>
+<div class="t" style="top:1665.35px;font-size:20.91px;color:#131f3b;left:15.90px;">Explore more products</div>
+<div class="b" style="left:16.1px;top:1702.9px;width:69.60px;height:108.80px;border-radius:9px;background:#f1f5fa;"></div>
+<svg class="b" style="left:39.29999999999999px;top:1720.4px;" width="23.2" height="23.2" viewBox="0 0 22 22" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="1.2" y="3" width="20" height="16" rx="2.6" stroke="#2a5e99" stroke-width="1.7"/><path d="M1.2 8.6h20M5 13.8h5" stroke="#2a5e99" stroke-width="1.7"/></svg>
+<div class="t" style="top:1773.28px;font-size:11.73px;color:#131f3b;left:12.90px;width:76px;text-align:center;line-height:14.8px;">Credit<br>cards</div>
+<div class="b" style="left:93.80000000000001px;top:1702.9px;width:69.60px;height:108.80px;border-radius:9px;background:#f1f5fa;"></div>
+<svg class="b" style="left:117.00000000000003px;top:1720.4px;" width="23.2" height="23.2" viewBox="0 0 22 22" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h8.5a4.5 4.5 0 0 1 4.5 4.5v1.5h1.2M5.5 20V9.2a2.7 2.7 0 0 1 1-2.1M16.4 20H8.2a2.7 2.7 0 0 1-2.7-2.7M16.4 20a3.1 3.1 0 0 0 3.1-3.1v-4.4M8.4 4.5h5.4M11.1 4.5v2" stroke="#2a5e99" stroke-width="1.7"/><circle cx="15.4" cy="10.6" r=".9" fill="#2a5e99"/></svg>
+<div class="t" style="top:1773.28px;font-size:11.73px;color:#131f3b;left:90.60px;width:76px;text-align:center;line-height:14.8px;">Savings &amp;<br>CDs</div>
+<div class="b" style="left:171.5px;top:1702.9px;width:69.60px;height:108.80px;border-radius:9px;background:#f1f5fa;"></div>
+<svg class="b" style="left:194.70000000000002px;top:1720.4px;" width="23.2" height="23.2" viewBox="0 0 22 22" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16.5 8 10.5l4 4 8-8.5M14.6 6h5.6v5.6" stroke="#2a5e99" stroke-width="1.8"/></svg>
+<div class="t" style="top:1773.28px;font-size:11.73px;color:#131f3b;left:168.30px;width:76px;text-align:center;line-height:14.8px;">Invest on<br>your own</div>
+<div class="b" style="left:249.20000000000002px;top:1702.9px;width:69.60px;height:108.80px;border-radius:9px;background:#f1f5fa;"></div>
+<svg class="b" style="left:272.4px;top:1720.4px;" width="23.2" height="23.2" viewBox="0 0 22 22" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.2 11 3l9 5.2M3.2 8.6h15.6M5 10.8v7.4M9 10.8v7.4M13 10.8v7.4M17 10.8v7.4M2.2 20.6h17.6" stroke="#2a5e99" stroke-width="1.6"/></svg>
+<div class="t" style="top:1789.62px;font-size:11.73px;color:#131f3b;left:246.00px;width:76px;text-align:center;">Checking</div>
+<div class="b" style="left:326.90000000000003px;top:1702.9px;width:69.60px;height:108.80px;border-radius:9px;background:#f1f5fa;"></div>
+<svg class="b" style="left:350.1px;top:1720.4px;" width="23.2" height="23.2" viewBox="0 0 22 22" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.6 5 6.6c.4-1 1.2-1.6 2.3-1.6h7.4c1.1 0 1.9.6 2.3 1.6l2 5M2.2 11.6h17.6v5.2H2.2zM2.2 11.6v5.2M5.4 16.8v1.6M16.6 16.8v1.6" stroke="#2a5e99" stroke-width="1.7"/><circle cx="6" cy="14.2" r="1" fill="#2a5e99"/><circle cx="16" cy="14.2" r="1" fill="#2a5e99"/></svg>
+<div class="t" style="top:1789.62px;font-size:11.73px;color:#131f3b;left:323.70px;width:76px;text-align:center;">Auto</div>
+<div class="b" style="left:244.6px;top:1836.8px;width:130.60px;height:35.00px;border-radius:17.5px;background:#f3f6fa;"></div>
+<div class="t" style="top:1847.55px;font-size:13.64px;color:#2b62b2;font-weight:700;left:244.90px;width:130px;text-align:center;">Explore products</div>
+<div class="t" style="top:1928.83px;font-size:21.0px;color:#131f3b;left:15.80px;">Chase Offers</div>
+<div class="b" style="left:261.9px;top:1921.2px;width:113.30px;height:35.00px;border-radius:17.5px;background:#f3f6fa;"></div>
+<div class="t" style="top:1932.05px;font-size:13.64px;color:#2b62b2;font-weight:700;left:262.05px;width:113px;text-align:center;">See 124 offers</div>
+<div class="t" style="top:1965.76px;font-size:15.64px;color:#101216;left:15.40px;">Cash back happens here</div>
+<div class="t" style="top:1999.71px;font-size:15.64px;color:#101216;left:15.40px;">For Freedom Unlimited (...0000)</div>
+<div class="b" style="left:16.1px;top:2037.5px;width:359.10px;height:317.30px;border-radius:10.5px;background:#fff;border:1px solid #d5d9dd;overflow:hidden;"><img alt="" src="data:image/jpeg;base64,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" style="position:absolute;left:0;right:0;top:83.3px;width:100%;height:63.7px;display:block;object-fit:cover"></div>
+<div class="t" style="top:2205.48px;font-size:12.69px;color:#5f6874;left:31.50px;">Voyage Rentals</div>
+<div class="t" style="top:2234.69px;font-size:22.29px;color:#090b0e;font-weight:700;left:31.90px;">The better way to rent a</div>
+<div class="t" style="top:2264.79px;font-size:22.29px;color:#090b0e;font-weight:700;left:32.00px;">car</div>
+<div class="t" style="top:2317.45px;font-size:15.65px;color:#131f3b;left:31.10px;">$30 cash back</div>
+<div class="b" style="left:312.8px;top:2292.3px;width:46.30px;height:46.30px;border-radius:50%;background:#f1f5fa;"></div>
+<svg class="b" style="left:328.2px;top:2307.4px;" width="15.5" height="15.5" viewBox="0 0 15.5 15.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M7.75 1v13.5M1 7.75h13.5" stroke="#2d65b6" stroke-width="2.1"/></svg>
+<div class="b" style="left:16.1px;top:2370.2px;width:127.00px;height:215.80px;border-radius:10.5px;background:#fff;border:1px solid #dce1e6;overflow:hidden;"><div style="position:absolute;left:0;right:0;top:0;height:100.7px;background:linear-gradient(160deg,#b4c0cc 0%,#cdd6df 50%,#e6ebf0 100%)"></div></div>
+<div class="b" style="left:61.599999999999994px;top:2442.3px;width:36.00px;height:36.00px;border-radius:50%;background:#694229;box-shadow:0 0 0 1px rgba(255,255,255,.85);"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:400 22px/1 Georgia,'Times New Roman',serif;padding-top:1px">H</span></div>
+<div class="t" style="top:2485.37px;font-size:12.76px;color:#131f3b;left:30.40px;">Harbor Coffee</div>
+<div class="t" style="top:2506.67px;font-size:11.6px;color:#0e1116;font-weight:700;left:30.70px;">10% cash back</div>
+<div class="b" style="left:96.5px;top:2539.4px;width:31.50px;height:31.50px;border-radius:50%;background:#f1f5fa;"></div>
+<svg class="b" style="left:105.5px;top:2548.4px;" width="13.5" height="13.5" viewBox="0 0 13.5 13.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 1v11.5M1 6.75h11.5" stroke="#2d65b6" stroke-width="2"/></svg>
+<div class="b" style="left:154.1px;top:2370.2px;width:127.00px;height:215.80px;border-radius:10.5px;background:#fff;border:1px solid #dce1e6;overflow:hidden;"><div style="position:absolute;left:0;right:0;top:0;height:100.7px;background:linear-gradient(150deg,#3f352b 0%,#6f5e4b 50%,#ae9878 100%)"></div></div>
+<div class="b" style="left:199.60000000000002px;top:2442.3px;width:36.00px;height:36.00px;border-radius:50%;background:#694229;box-shadow:0 0 0 1px rgba(255,255,255,.85);"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:400 22px/1 Georgia,'Times New Roman',serif;padding-top:1px">F</span></div>
+<div class="t" style="top:2485.37px;font-size:12.76px;color:#131f3b;left:168.40px;">Fresh Market</div>
+<div class="t" style="top:2506.67px;font-size:11.6px;color:#0e1116;font-weight:700;left:168.70px;">5% cash back</div>
+<div class="b" style="left:234.5px;top:2539.4px;width:31.50px;height:31.50px;border-radius:50%;background:#f1f5fa;"></div>
+<svg class="b" style="left:243.5px;top:2548.4px;" width="13.5" height="13.5" viewBox="0 0 13.5 13.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 1v11.5M1 6.75h11.5" stroke="#2d65b6" stroke-width="2"/></svg>
+<div class="b" style="left:292.1px;top:2370.2px;width:127.00px;height:215.80px;border-radius:10.5px;background:#fff;border:1px solid #dce1e6;overflow:hidden;"><div style="position:absolute;left:0;right:0;top:0;height:100.7px;background:linear-gradient(150deg,#4b67a2 0%,#7f98c6 50%,#c4d1e3 100%)"></div></div>
+<div class="b" style="left:337.6px;top:2442.3px;width:36.00px;height:36.00px;border-radius:50%;background:#694229;box-shadow:0 0 0 1px rgba(255,255,255,.85);"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:400 22px/1 Georgia,'Times New Roman',serif;padding-top:1px">C</span></div>
+<div class="t" style="top:2485.37px;font-size:12.76px;color:#131f3b;left:306.40px;">City Ride</div>
+<div class="t" style="top:2506.67px;font-size:11.6px;color:#0e1116;font-weight:700;left:306.70px;">$8 cash back</div>
+<div class="b" style="left:372.5px;top:2539.4px;width:31.50px;height:31.50px;border-radius:50%;background:#f1f5fa;"></div>
+<svg class="b" style="left:381.5px;top:2548.4px;" width="13.5" height="13.5" viewBox="0 0 13.5 13.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 1v11.5M1 6.75h11.5" stroke="#2d65b6" stroke-width="2"/></svg>
+<div class="t" style="top:2651.80px;font-size:20.0px;color:#131f3b;left:15.10px;">Visit us</div>
+<div class="b" style="left:16.1px;top:2691.1px;width:359.10px;height:108.80px;border-radius:10.5px;background:#f5f7fb;"></div>
+<svg class="b" style="left:33.6px;top:2708.0px;" width="22" height="21" viewBox="0 0 22 21" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="19" height="16.5" rx="2.4" stroke="#566372" stroke-width="1.6"/><path d="M1 8.2h19M6 1v4M15 1v4" stroke="#566372" stroke-width="1.6"/><circle cx="15.2" cy="15" r="4.3" fill="#f5f7fb" stroke="#566372" stroke-width="1.5"/><path d="m13.3 15 1.4 1.4 2.4-2.6" stroke="#566372" stroke-width="1.4"/></svg>
+<svg class="b" style="left:34.0px;top:2762.7px;" width="21" height="20" viewBox="0 0 21 20" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 1.2 19.5 7.8v11H1.5v-11z" stroke="#566372" stroke-width="1.6"/><path d="M12.7 9.6h-3a1.5 1.5 0 0 0 0 3h1.6a1.5 1.5 0 0 1 0 3H8.2M10.5 8.2v1.4M10.5 15.6V17" stroke="#566372" stroke-width="1.5"/></svg>
+<div class="t" style="top:2710.93px;font-size:15.68px;color:#101216;left:67.00px;">Schedule a meeting</div>
+<div class="t" style="top:2765.53px;font-size:15.68px;color:#101216;left:66.50px;">ATM &amp; branch</div>
+<svg class="b" style="left:346.6px;top:2712.0px;" width="8.4" height="13.6" viewBox="0 0 8.4 13.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1.6 1.2 6.8 6.8 1.6 12.4" stroke="#566372" stroke-width="1.6"/></svg>
+<svg class="b" style="left:346.6px;top:2766.1px;" width="8.4" height="13.6" viewBox="0 0 8.4 13.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1.6 1.2 6.8 6.8 1.6 12.4" stroke="#566372" stroke-width="1.6"/></svg>
+<div class="t" style="top:2837.96px;font-size:13.62px;color:#131f3b;left:15.60px;">DISCLOSURES</div>
+<div class="t" style="top:2874.42px;font-size:12.96px;color:#2b62b2;font-weight:700;left:15.90px;">Read Snapshot disclosure ›</div>
+<div class="t" style="top:2911.21px;font-size:11.67px;color:#55606d;left:15.60px;">Investment products and services are offered through J.P. Morgan</div>
+<div class="t" style="top:2927.31px;font-size:11.67px;color:#55606d;left:15.40px;">Securities LLC, a Member of FINRA and SIPC.</div>
+<div class="t" style="top:2961.72px;font-size:12.96px;color:#2b62b2;font-weight:700;left:15.90px;">Read complete disclosures ›</div>
+<div class="b" style="left:16.1px;top:2995.6px;width:359.10px;height:89.40px;border-radius:10.5px;background:#f5f7fb;"></div>
+<div class="t" style="top:3011.28px;font-size:11.65px;color:#404a57;font-weight:700;left:31.40px;">INVESTMENT AND INSURANCE PRODUCTS: NOT A</div>
+<div class="t" style="top:3026.73px;font-size:11.65px;color:#404a57;font-weight:700;left:31.40px;">DEPOSIT <span style="font-size:14px;line-height:0;position:relative;top:.6px">•</span> NOT FDIC INSURED <span style="font-size:14px;line-height:0;position:relative;top:.6px">•</span> NOT INSURED BY ANY</div>
+<div class="t" style="top:3042.18px;font-size:11.65px;color:#404a57;font-weight:700;left:31.40px;">FEDERAL GOVERNMENT AGENCY <span style="font-size:14px;line-height:0;position:relative;top:.6px">•</span> NO BANK</div>
+<div class="t" style="top:3057.63px;font-size:11.65px;color:#404a57;font-weight:700;left:31.40px;">GUARANTEE <span style="font-size:14px;line-height:0;position:relative;top:.6px">•</span> MAY LOSE VALUE</div>
+<div class="t" style="top:3125.20px;font-size:13.18px;color:#285da3;font-weight:700;left:95.95px;width:200px;text-align:center;">Legal information ›</div>
+<button class="b card-hit" id="openCard" type="button" aria-label="Open Freedom Unlimited (...0000)" style="left:16.1px;top:345px;width:359.1px;height:209.8px"></button>
+      </div></div>
+
+      <div class="home-head home-fixed">
+        <svg class="b" style="left:30.4px;top:71.2px" width="25" height="27" viewBox="0 0 25 27" fill="none" stroke="#566372" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.2h11.2" stroke-width="1.9"/><rect x="1.3" y="6.6" width="17" height="13.4" rx="2"/><path d="M18.3 10.2h-3.6a2.7 2.7 0 0 0 0 5.4h3.6"/><circle cx="19.2" cy="21.6" r="4.6" fill="#fff"/><path d="M19.2 19.4v4.4M17 21.6h4.4" stroke-width="1.4"/></svg>
+        <div class="search">What are you looking for?</div>
+        <svg class="b" style="left:302.6px;top:74.2px" width="20" height="17" viewBox="0 0 20 17" fill="none" stroke="#566372" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M1.6 1.2h16.8v10.6H6.2L1.6 15.4z"/><path d="M5.6 5h9M5.6 8.2h6.4"/></svg>
+        <svg class="b" style="left:336.6px;top:68.3px" width="28.4" height="27.6" viewBox="0 0 28.4 27.6" fill="none" stroke="#566372" stroke-width="1.6"><circle cx="14.2" cy="13.8" r="12.9"/><circle cx="14.2" cy="10.6" r="4.4"/><path d="M5.6 23.3c1.7-3.7 4.9-5.6 8.6-5.6s6.9 1.9 8.6 5.6"/></svg>
+      </div>
+
+      <!-- ===== CARD DETAIL (opens from the Freedom Unlimited card; swipe for the locked upgrade) ===== -->
+      <div class="detail" id="detail" aria-label="Card details">
+        <div class="d-scroll" id="detailScroll"><div class="d-page">
+          <div class="d-carousel" id="cardCarousel">
+            <div class="d-slide" data-i="0"><svg class="fu-card" viewBox="0 0 340 214" width="340" height="214" aria-hidden="true">
+  <defs>
+    <linearGradient id="fu-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b3b80"/><stop offset=".42" stop-color="#1258a9"/><stop offset=".72" stop-color="#0c4590"/><stop offset="1" stop-color="#062a62"/>
+    </linearGradient>
+    <radialGradient id="fu-glow" cx=".62" cy=".3" r=".6"><stop offset="0" stop-color="#6fb8ff" stop-opacity=".38"/><stop offset="1" stop-color="#6fb8ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="fu-sw" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2a8fe0" stop-opacity=".2"/><stop offset=".45" stop-color="#5cc4ff" stop-opacity=".95"/><stop offset=".7" stop-color="#c9f1ff"/><stop offset="1" stop-color="#7fd3ff" stop-opacity=".1"/>
+    </linearGradient>
+    <linearGradient id="fu-visa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f7fb"/><stop offset="1" stop-color="#a9b8cc"/></linearGradient>
+    <filter id="fu-blur" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="3.2"/></filter>
+    <clipPath id="fu-clip"><rect width="340" height="214" rx="10"/></clipPath>
+    <polygon id="fu-pc" points="35,4 67,4 96,33 64,33 64,36 35,36"/>
+  </defs>
+  <g clip-path="url(#fu-clip)">
+    <rect width="340" height="214" fill="url(#fu-bg)"/>
+    <rect width="340" height="214" fill="url(#fu-glow)"/>
+    <path d="M-10 70 C 80 55, 170 115, 350 40 L350 -10 L-10 -10Z" fill="#ffffff" opacity=".05"/>
+    <path d="M-10 128 C 90 110, 180 150, 350 92 L350 230 L-10 230Z" fill="#04224f" opacity=".42"/>
+    <path d="M-10 172 C 110 168, 215 150, 350 84" stroke="url(#fu-sw)" stroke-width="9" fill="none" filter="url(#fu-blur)" opacity=".8"/>
+    <path d="M-10 172 C 110 168, 215 150, 350 84" stroke="url(#fu-sw)" stroke-width="2.2" fill="none"/>
+    <path d="M-10 186 C 120 182, 230 166, 350 104" stroke="#3aa2ff" stroke-width="1" fill="none" opacity=".35"/>
+    <g transform="translate(10 10.5) scale(.376)" fill="#fff">
+      <use href="#fu-pc"/><use href="#fu-pc" transform="rotate(90 50 50)"/><use href="#fu-pc" transform="rotate(180 50 50)"/><use href="#fu-pc" transform="rotate(270 50 50)"/>
+    </g>
+    <text x="56" y="37.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="34" font-weight="500" font-style="italic" letter-spacing="-1.1" fill="#fff">freedom</text>
+    <text x="69" y="48.4" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.4" font-weight="700" letter-spacing="1.55" fill="#8cc63e">UNLIMITED</text>
+    <text x="328" y="188.6" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="31" font-weight="800" font-style="italic" letter-spacing="-.6" fill="url(#fu-visa)">VISA</text>
+    <text x="328.6" y="202.4" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" fill="#c8d3e3">Signature</text>
+  </g>
+</svg></div>
+            <div class="d-slide" data-i="1" aria-label="Locked upgrade: classic silver card"><svg class="sv-card" viewBox="0 0 340 214" width="340" height="214" aria-hidden="true"><defs><polygon id="sv-pc" points="35,4 67,4 96,33 64,33 64,36 35,36"/></defs><defs>
+          <linearGradient id="sv-silver" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f4f6f9"/><stop offset=".28" stop-color="#c8cdd5"/>
+            <stop offset=".5" stop-color="#eef1f4"/><stop offset=".74" stop-color="#aab1bb"/>
+            <stop offset="1" stop-color="#dde1e7"/>
+          </linearGradient>
+          <linearGradient id="sv-sheen" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="sv-chip" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8d49a"/><stop offset="1" stop-color="#a88d55"/></linearGradient>
+          <pattern id="sv-brushed" width="4" height="230" patternUnits="userSpaceOnUse"><rect width="1" height="230" fill="#000" opacity=".035"/></pattern>
+          <clipPath id="sv-cardClip"><rect width="230" height="145" rx="12"/></clipPath>
+          <radialGradient id="sv-glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#5d9bff" stop-opacity=".55"/><stop offset="1" stop-color="#5d9bff" stop-opacity="0"/></radialGradient>
+        </defs><g transform="scale(1.47826)">
+          <g clip-path="url(#sv-cardClip)">
+            <rect width="230" height="145" fill="url(#sv-silver)"/>
+            <rect width="230" height="145" fill="url(#sv-brushed)"/>
+            <rect x="-60" y="-40" width="90" height="240" fill="url(#sv-sheen)" transform="rotate(24)"/>
+            <g transform="translate(150 52) scale(.95)" fill="#1f2a44" opacity=".08">
+              <use href="#sv-pc"/><use href="#sv-pc" transform="rotate(90 50 50)"/><use href="#sv-pc" transform="rotate(180 50 50)"/><use href="#sv-pc" transform="rotate(270 50 50)"/>
+            </g>
+          </g>
+          <rect width="230" height="145" rx="12" fill="none" stroke="#fff" stroke-opacity=".7"/>
+          <g transform="translate(16 15) scale(.24)" fill="#1f2a44">
+            <use href="#sv-pc"/><use href="#sv-pc" transform="rotate(90 50 50)"/><use href="#sv-pc" transform="rotate(180 50 50)"/><use href="#sv-pc" transform="rotate(270 50 50)"/>
+          </g>
+          <text x="46" y="33" font-family="-apple-system, Helvetica, Arial" font-size="15" font-weight="700" letter-spacing="2" fill="#1f2a44">CHASE</text>
+          <rect x="20" y="56" width="34" height="26" rx="5" fill="url(#sv-chip)"/>
+          <path d="M20 65h12M20 73h12M42 65h12M42 73h12M32 56v26M42 56v26" stroke="#8a7444" stroke-width=".8" opacity=".7"/>
+          <g fill="none" stroke="#3a4256" stroke-width="1.6" stroke-linecap="round" opacity=".75">
+            <path d="M64 63a10 10 0 0 1 0 12"/><path d="M69 59a16 16 0 0 1 0 20"/><path d="M74 55a22 22 0 0 1 0 28"/>
+          </g>
+          <text x="20" y="112" font-family="Menlo, monospace" font-size="12.5" letter-spacing="1.5" fill="#3a4256">•••• •••• •••• 0000</text>
+          <text x="20" y="131" font-family="-apple-system, Helvetica, Arial" font-size="7.5" font-weight="600" letter-spacing="1.2" fill="#4c5468">CARDMEMBER</text>
+        </g></svg>
+              <div class="d-lock"><div class="d-lock-badge"><svg width="26" height="30" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path class="shackle" d="M6.5 13V8.6a6.5 6.5 0 0 1 13 0V13" stroke="#131f3b" stroke-width="2.6" stroke-linecap="round"/><rect x="2" y="12.6" width="22" height="16" rx="3.6" fill="#131f3b"/><circle cx="13" cy="19.4" r="2.3" fill="#fff"/><path d="M13 20.6v3.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div><span class="d-lock-tag">Locked upgrade</span></div>
+            </div>
+          </div>
+          <div class="d-dots"><button class="on" data-i="0" type="button" aria-label="Freedom Unlimited"></button><button data-i="1" type="button" aria-label="Locked upgrade"></button></div>
+          <div class="d-pane on" data-i="0">
+          <div class="d-chips"><span class="d-chip">Manage account</span><span class="d-chip">Lock/unlock card</span><span class="d-chip">Pay Over Time</span><span class="d-chip">Card benefits</span></div>
+          <div class="d-box"><span class="a d-lbl" style="top:22.8px;left:16.5px;">Current balance</span><svg class="a" style="left:137px;top:20.4px" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#285da3" stroke-width="1.4"><circle cx="9" cy="9" r="8"/><path d="M6.7 7a2.3 2.3 0 1 1 3.4 2c-.7.4-1.1.9-1.1 1.7v.4" stroke-linecap="round"/><circle cx="9" cy="13.4" r=".9" fill="#285da3" stroke="none"/></svg><span class="a " style="top:46.5px;left:15.6px;font-size:31px;color:#131f3b">$420.00</span><svg class="a" style="left:18.4px;top:99.5px" width="16" height="13" viewBox="0 0 16 13" fill="none"><path d="M1.6 6.8 5.8 11 14.4 1.8" stroke="#1e7b5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="a" style="left:44.4px;top:96.6px;font-size:16.5px;line-height:24.5px;color:#1e7b5b;white-space:normal;width:290px">You've scheduled your automatic payment for Nov 18, 2026.</span><span class="a d-lbl" style="top:179.7px;left:16.5px;">Minimum payment due</span><span class="a d-val" style="top:179.7px;">$35.00</span><span class="a d-lbl" style="top:215.2px;left:16.5px;">Payment due date</span><span class="a d-val" style="top:215.2px;">Nov 18, 2026</span><span class="a d-lbl" style="top:250.6px;left:16.5px;">Statement balance (as of Oct 21)</span><span class="a d-val" style="top:250.6px;">$386.42</span><span class="d-btn" style="left:16.5px;background:#eaf1fb;color:#285da3">See statements</span><span class="d-btn" style="right:16px;background:#1a6fdb;color:#fff">Pay card</span><span class="d-more">Show details <svg width="17" height="10" viewBox="0 0 17 10" fill="none"><path d="M1.5 1.5 8.5 8.3 15.5 1.5" stroke="#285da3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+          <div class="d-row-box"><span>Benefits &amp; rewards</span><svg width="9" height="15" viewBox="0 0 9 15" fill="none"><path d="M1.6 1.4 7.2 7.5 1.6 13.6" stroke="#566372" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="d-h2"><h2>Transactions</h2><span>See all</span></div>
+          <div class="d-tx"><div class="d-tx-row"><div><div class="m">Harbor Coffee</div><div class="d">Oct 9, 2026</div></div><div class="v">$6.45</div></div><div class="d-tx-row"><div><div class="m">Fresh Market</div><div class="d">Oct 8, 2026</div></div><div class="v">$84.12</div></div><div class="d-tx-row"><div><div class="m">City Ride</div><div class="d">Oct 6, 2026</div></div><div class="v">$18.30</div></div><div class="d-tx-row"><div><div class="m">Voyage Rentals</div><div class="d">Oct 3, 2026</div></div><div class="v">$142.60</div></div><div class="d-tx-row"><div><div class="m">Payment Thank You</div><div class="d">Oct 1, 2026</div></div><div class="v cr">-$250.00</div></div></div>
+          </div>
+          <div class="d-pane" data-i="1">
+          <button class="d-unlock" type="button"><svg width="18" height="21" viewBox="0 0 18 21" fill="none" aria-hidden="true"><path d="M4.6 9V6.2a4.4 4.4 0 0 1 8.5-1.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/><rect x="1.4" y="8.6" width="15.2" height="11" rx="2.6" fill="#fff"/><circle cx="9" cy="13.4" r="1.6" fill="#1a6fdb"/></svg>Unlock this card</button>
+          <div class="d-info">
+            <span class="d-eyebrow"><svg width="13" height="13" viewBox="0 0 100 100"><g fill="#285da3"><use href="#sv-pc"/><use href="#sv-pc" transform="rotate(90 50 50)"/><use href="#sv-pc" transform="rotate(180 50 50)"/><use href="#sv-pc" transform="rotate(270 50 50)"/></g></svg>Pre-selected for you</span>
+            <h3>Upgrade your card!</h3>
+            <p>Step up to our classic silver card and earn more on what you already buy. You keep your account history and your payments carry over, so upgrading takes just a tap.</p>
+            <ul class="d-perks"><li>3x points on dining and travel</li><li>1.5x points on everything else</li><li>No foreign transaction fees</li></ul>
+            <div class="d-kv"><span>Dining &amp; travel</span><span>3x points</span></div>
+            <div class="d-kv"><span>Everything else</span><span>1.5x points</span></div>
+            <div class="d-kv"><span>Foreign transaction fees</span><span>None</span></div>
+            <div class="d-kv"><span>Account history</span><span>Carries over</span></div>
+          </div>
+          <p class="d-fine">Subject to credit approval. Offer terms apply. Credit cards are issued by Chase Bank USA, N.A.</p>
+          </div>
+        </div></div>
+        <div class="d-head">
+          <button class="d-back" id="closeCard" type="button" aria-label="Back"><svg width="13" height="22" viewBox="0 0 13 22" fill="none"><path d="M11 2 2.4 11 11 20" stroke="#131f3b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="d-title"><span>Freedom Unlimited (...0000)</span><span>Classic Silver card</span></div>
+        </div>
+      </div>
+      <nav class="tabbar">
+        <svg style="left:33.3px;top:19.7px" width="20" height="17.6" viewBox="0 0 20 17.6" fill="none" stroke="#285da3" stroke-width="1.7" stroke-linecap="round"><rect x=".9" y=".9" width="18.2" height="15.8" rx="2.4"/><path d="M.9 5.8h18.2M4.6 11.4h5.2"/></svg>
+        <div class="lab on" style="left:42.8px;top:45px;font-size:10px">Accounts</div>
+        <svg style="left:110.8px;top:19.6px" width="18" height="17.6" viewBox="0 0 18 17.6" fill="none" stroke="#4e5b6c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.2 5h15.4M12.4 1 16.6 5l-4.2 4M16.8 12.6H1.4M5.6 8.6 1.4 12.6l4.2 4"/></svg>
+        <div class="lab" style="left:119.7px;top:44.6px">Pay &amp; transfer</div>
+        <svg style="left:184.9px;top:19.2px" width="22" height="17" viewBox="0 0 22 17" fill="none" stroke="#4e5b6c" stroke-width="1.6" stroke-linecap="round"><path d="M.8 16.1h20.4M3.9 15.6V5.6M8.3 15.6V2.4M12.7 15.6V9.3M17.1 15.6V1"/></svg>
+        <div class="lab" style="left:196px;top:45px">Plan &amp; track</div>
+        <svg style="left:263.6px;top:13.4px" width="17.4" height="19" viewBox="0 0 17.4 19" fill="none" stroke="#4e5b6c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.7.9 16.4 3.8v5.4c0 4.2-3.1 7.6-7.7 8.9C4.1 16.8 1 13.4 1 9.2V3.8z"/><path d="M5.4 9.1l2.4 2.4 4.2-4.4"/></svg>
+        <div class="lab" style="left:272.2px;top:37.8px;line-height:11.6px">Benefits &amp;<br>travel</div>
+        <svg style="left:339.4px;top:26.2px" width="17.6" height="4.2" viewBox="0 0 17.6 4.2" fill="#4e5b6c"><circle cx="2.1" cy="2.1" r="1.95"/><circle cx="8.8" cy="2.1" r="1.95"/><circle cx="15.5" cy="2.1" r="1.95"/></svg>
+        <div class="lab" style="left:348.2px;top:45px">More</div>
+      </nav>
+    </section>
+
+    <div class="home-indicator" id="homeInd"></div>
+  </div>
+</div>
+</div>
+
+<script>
+  // Prototype navigation only. Inputs are decorative: nothing is read, stored, or sent.
+  const views = { login: document.getElementById('login'), home: document.getElementById('home') };
+  const homeInd = document.getElementById('homeInd');
+  const status = document.getElementById('status');
+
+  function show(name) {
+    Object.values(views).forEach(v => v.classList.remove('active'));
+    views[name].classList.add('active');
+    const offer = document.getElementById('promo');
+    if (offer && !views.promo) { offer.classList.remove('active', 'collapsed'); offer.style.clipPath = ''; }
+    const dt = document.getElementById('detail');
+    if (dt) { dt.classList.remove('open', 'closing'); views.home.classList.remove('pushed'); }
+    status.classList.toggle('light', name !== 'home');
+    homeInd.style.display = name === 'home' ? 'none' : '';
+    homeInd.style.background = name === 'login' ? '#111' : '#fff';
+    if (name === 'home') document.getElementById('homeScroll').scrollTop = 0;
+  }
+  function clearInputs() {
+    views.login.querySelectorAll('input').forEach(i => { i.type === 'checkbox' ? (i.checked = false) : (i.value = ''); });
+  }
+
+  document.getElementById('logon').addEventListener('click', () => { clearInputs(); show('home'); });
+  document.getElementById('restart').addEventListener('click', () => { clearInputs(); show('login'); });
+
+  // Deep link for reviews: #home or #home=<scrollY>
+  const m = location.hash.match(/^#home(?:=(\d+(?:\.\d+)?))?/);
+  if (m) { show('home'); if (m[1]) document.getElementById('homeScroll').scrollTop = +m[1]; } else show('login');
+
+  // Scale the phone to fit the window
+  const phone = document.querySelector('.phone');
+  function fit() {
+    const s = Math.min(1, (innerHeight - 60) / 877.3, (innerWidth - 24) / 417.8);
+    phone.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+  }
+  addEventListener('resize', fit); fit();
+
+  // Freedom Unlimited card -> card detail (iOS-style push)
+  const detail = document.getElementById('detail');
+  const homeView = document.getElementById('home');
+  const car = document.getElementById('cardCarousel');
+  const STEP = 348; // slide width + gap
+  let page = 0;
+  function setPage(i) {
+    page = i;
+    detail.classList.toggle('p1', i === 1);
+    detail.querySelectorAll('.d-dots button').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+    detail.querySelectorAll('.d-pane').forEach(p => p.classList.toggle('on', +p.dataset.i === i));
+  }
+  function goTo(i) { car.scrollTo({ left: i * STEP, behavior: 'smooth' }); }
+  car.addEventListener('scroll', () => { const i = Math.round(car.scrollLeft / STEP); if (i !== page) setPage(i); });
+  detail.querySelectorAll('.d-dots button').forEach(b => b.addEventListener('click', () => goTo(+b.dataset.i)));
+
+  // Mouse drag to swipe (touch and trackpads scroll natively).
+  // Always binary: whenever the drag ends, for any reason, the carousel lands on exactly one card.
+  let drag = null;
+  const scaleK = () => car.getBoundingClientRect().width / 390;
+  function endDrag(e) {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (e && e.clientX != null) d.dx = (e.clientX - d.x) / scaleK();
+    if (Math.abs(d.dx) > 4) d.moved = true;
+    try { car.releasePointerCapture(d.id); } catch (_) {}
+    car.classList.remove('dragging');
+    let target = page;
+    if (d.moved) target = d.dx < -30 ? 1 : d.dx > 30 ? 0 : d.start;
+    else if (e && e.clientX != null) {
+      const el = document.elementFromPoint(e.clientX, e.clientY), sl = el && el.closest('.d-slide');
+      if (sl) target = +sl.dataset.i;
+    }
+    goTo(target);
+    setPage(target);
+  }
+  car.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    drag = { id: e.pointerId, x: e.clientX, left: car.scrollLeft, start: page, dx: 0, moved: false };
+    try { car.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  car.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (e.buttons === 0) return endDrag(e);           // button was released somewhere we did not hear about
+    const r = document.getElementById('screen').getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return endDrag(e); // dragged off the phone
+    drag.dx = (e.clientX - drag.x) / scaleK();
+    if (Math.abs(drag.dx) > 4) { drag.moved = true; car.classList.add('dragging'); }
+    car.scrollLeft = Math.max(0, Math.min(STEP, drag.left - drag.dx));
+  });
+  car.addEventListener('pointerup', endDrag);
+  car.addEventListener('pointercancel', endDrag);
+  car.addEventListener('lostpointercapture', () => endDrag());
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('blur', () => endDrag());
+  car.addEventListener('dragstart', e => e.preventDefault());
+
+  // Safety net: if a scroll ever comes to rest between cards, snap to the nearest one
+  let settle;
+  car.addEventListener('scroll', () => {
+    clearTimeout(settle);
+    settle = setTimeout(() => {
+      if (drag) return;
+      const i = Math.round(car.scrollLeft / STEP);
+      if (Math.abs(car.scrollLeft - i * STEP) > 1) goTo(i);
+    }, 160);
+  });
+
+  function openCard() {
+    document.getElementById('detailScroll').scrollTop = 0;
+    car.scrollLeft = 0; setPage(0);
+    detail.classList.remove('closing');
+    detail.classList.add('open');
+    homeView.classList.add('pushed');
+  }
+  function closeCard() {
+    detail.classList.add('closing');
+    detail.classList.remove('open');
+    homeView.classList.remove('pushed');
+    setTimeout(() => detail.classList.remove('closing'), 400);
+  }
+  document.getElementById('openCard').addEventListener('click', openCard);
+  document.getElementById('closeCard').addEventListener('click', closeCard);
+  const hm = location.hash.match(/^#card(?:=(\d))?/);
+  if (hm) { show('home'); detail.style.transition = 'none'; openCard(); detail.offsetWidth; detail.style.transition = '';
+            if (hm[1] === '1') { car.scrollLeft = STEP; setPage(1); } }
+
+  // Decorative wavy line texture on the login hero
+  (function drawWaves() {
+    const svg = document.getElementById('waves');
+    const ns = 'http://www.w3.org/2000/svg';
+    for (let i = -40; i < 95; i++) {
+      const x = i * 6;
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', `M${x} -10 C ${x + 60} 150, ${x - 50} 320, ${x + 40} 450 S ${x + 120} 580, ${x + 70} 620`);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', 'rgba(255,255,255,0.13)');
+      p.setAttribute('stroke-width', '1');
+      svg.appendChild(p);
+    }
+  })();
+</script>
+</body>
+</html>
